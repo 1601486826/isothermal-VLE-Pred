@@ -7,3 +7,4 @@ pyarrow<26
 torch
 lightgbm
 catboost
+xgboost
