@@ -21,7 +21,6 @@ warnings.filterwarnings("ignore")
 st.set_page_config(
     layout="centered",
     page_title="Isothermal VLE Predictor",
-    page_icon="⚗️",
     initial_sidebar_state="collapsed",
 )
 
@@ -483,7 +482,7 @@ with col_left:
         )
 
     submit_button = st.button(
-        "🚀 Submit & Predict Both",
+        "Submit & Predict Both",
         type="primary",
         use_container_width=True,
         key="predict_button",
@@ -775,7 +774,7 @@ if submit_button:
         )
 
         st.download_button(
-            "⬇️ Download CSV",
+            "Download CSV",
             data=csv,
             file_name="VLE_results.csv",
             mime="text/csv",
