@@ -98,8 +98,8 @@ st.markdown(
     /* ---------- Overall page ---------- */
 
     .block-container {
-        max-width: 1100px !important;
-        padding-top: 1.5rem !important;
+        max-width: 800px !important;
+        padding-top: 2rem !important;
         padding-bottom: 1.2rem !important;
         padding-left: 1.5rem !important;
         padding-right: 1.5rem !important;
