@@ -428,14 +428,14 @@ if submit_button:
                     rows.append({
                         "Model": m,
                         "y₁ (vapor mole fraction)": float(constrained[0]),
-                        "P (kPa)": "—",
+                        "P (kPa)": np.nan,  # <--- 改为 np.nan，避免类型冲突
                         "Is Champion": " Y1" if rank == 1 else "",
                     })
                 except Exception as e:
                     rows.append({
                         "Model": m,
                         "y₁ (vapor mole fraction)": np.nan,
-                        "P (kPa)": "—",
+                        "P (kPa)": np.nan,
                         "Is Champion": "❌",
                     })
 
@@ -447,14 +447,14 @@ if submit_button:
                         raise ValueError("Non-finite prediction.")
                     rows.append({
                         "Model": m,
-                        "y₁ (vapor mole fraction)": "—",
+                        "y₁ (vapor mole fraction)": np.nan,  # <--- 改为 np.nan
                         "P (kPa)": raw,
                         "Is Champion": "🏆 P" if rank == 1 else "",
                     })
                 except Exception as e:
                     rows.append({
                         "Model": m,
-                        "y₁ (vapor mole fraction)": "—",
+                        "y₁ (vapor mole fraction)": np.nan,
                         "P (kPa)": np.nan,
                         "Is Champion": "❌",
                     })
@@ -471,26 +471,34 @@ if submit_button:
                 f"🏆 Champion P model: **{p_champ}**"
             )
 
-            # Highlight champion rows
+            # Highlight champion rows (修复了之前的逻辑 bug)
             def highlight_champ(row):
                 styles = [""] * len(row)
-                if row["Is Champion"].startswith(""):
+                # 只有包含奖杯图标的行才高亮
+                if "" in str(row["Is Champion"]):
                     styles = ["background-color:#fff9c4; font-weight:bold"] * len(row)
                 return styles
 
             display_cols = ["Model", "y₁ (vapor mole fraction)", "P (kPa)", "Is Champion"]
+            
+            # 使用 na_rep="—" 让 NaN 在界面上显示为破折号
             styled = (
                 results_df[display_cols]
                 .style
                 .apply(highlight_champ, axis=1)
-                .format({"y₁ (vapor mole fraction)": "{:.6f}", "P (kPa)": "{:.4f}"})
+                .format(
+                    {"y₁ (vapor mole fraction)": "{:.6f}", "P (kPa)": "{:.4f}"}, 
+                    na_rep="—"
+                )
             )
             st.dataframe(styled, use_container_width=True, hide_index=True)
 
             # ---- Step 7. Download CSV ----
-            csv = results_df[display_cols].to_csv(index=False).encode("utf-8-sig")
+            # 下载时把 NaN 替换为字符串，方便查看
+            csv_df = results_df[display_cols].fillna("—")
+            csv = csv_df.to_csv(index=False).encode("utf-8-sig")
             st.download_button(
-                label="⬇️ Download Results (CSV)",
+                label="️ Download Results (CSV)",
                 data=csv,
                 file_name="VLE_predictions.csv",
                 mime="text/csv",
