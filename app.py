@@ -761,7 +761,7 @@ if submit_button:
             styled,
             use_container_width=True,
             hide_index=True,
-            height=270,
+            height=260,
         )
 
         # ===================================================
