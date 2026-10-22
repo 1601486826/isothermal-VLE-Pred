@@ -1,4 +1,3 @@
-
 # -----------------------------------------------------------
 # Isothermal VLE Predictor
 # Compact and Centered UI Version
@@ -802,4 +801,3 @@ if submit_button:
             st.code(
                 traceback.format_exc()
             )
-```
