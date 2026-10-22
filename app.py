@@ -1,6 +1,7 @@
+
 # -----------------------------------------------------------
 # Isothermal VLE Predictor
-# Compact and Centered UI Version
+# Balanced Layout + Centered Molecular Structures
 # -----------------------------------------------------------
 
 import os
@@ -90,7 +91,7 @@ Y1_MODELS = Y1_MODELS_FULL[:3]
 P_MODELS = P_MODELS_FULL[:3]
 
 # ===========================================================
-# 6. Compact page style
+# 6. Balanced page style
 # ===========================================================
 st.markdown(
     """
@@ -98,51 +99,35 @@ st.markdown(
     /* ---------- Overall page ---------- */
 
     .block-container {
-        max-width: 1000px !important;
-        padding-top: 0.65rem !important;
-        padding-bottom: 0.5rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-    }
-
-    /* Reduce default vertical gaps between Streamlit elements */
-    div[data-testid="stVerticalBlock"] {
-        gap: 0.45rem;
-    }
-
-    div[data-testid="stHorizontalBlock"] {
-        gap: 0.8rem;
-        align-items: flex-start;
+        max-width: 1100px !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.2rem !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
     }
 
     /* ---------- Main title ---------- */
 
-    .title-block {
+    .main-title {
         text-align: center;
-        background: #f0f2f6;
-        padding: 7px 8px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-    }
-
-    .title-block h2 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        line-height: 1.35;
-        margin: 0;
-        padding: 0;
+        font-size: 1.8rem;
+        font-weight: 750;
         color: #202938;
+        padding: 0.5rem 0 1rem 0;
+        margin-bottom: 0.8rem;
+        border-bottom: 1px solid #e5e7eb;
+        line-height: 1.4;
     }
 
     /* ---------- Section headings ---------- */
 
     .section-header {
-        font-size: 0.92rem;
+        font-size: 1rem;
         font-weight: 700;
-        line-height: 1.3;
         border-left: 4px solid #6c63ff;
-        padding-left: 8px;
-        margin: 1px 0 5px 0;
+        padding-left: 10px;
+        margin: 0 0 12px 0;
+        line-height: 1.5;
         color: #202938;
     }
 
@@ -150,52 +135,50 @@ st.markdown(
 
     .stTextInput label,
     .stNumberInput label {
-        font-size: 0.78rem !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
+        font-size: 0.85rem !important;
+        padding-bottom: 3px !important;
     }
 
-    /* ---------- Input boxes ---------- */
+    /* ---------- Input spacing ---------- */
 
     .stTextInput,
     .stNumberInput {
-        margin-top: 0 !important;
-        margin-bottom: 0.1rem !important;
-    }
-
-    .stTextInput > div,
-    .stNumberInput > div {
-        margin-top: 0 !important;
+        margin-bottom: 0.45rem !important;
     }
 
     .stTextInput input,
     .stNumberInput input {
-        font-size: 0.8rem !important;
+        font-size: 0.88rem !important;
     }
 
-    /* Compact input field height */
-    .stTextInput div[data-baseweb="input"],
-    .stNumberInput div[data-baseweb="input"] {
-        min-height: 2.15rem !important;
+    /* ---------- Prediction button ---------- */
+
+    .stButton > button {
+        min-height: 2.7rem;
+        margin-top: 0.45rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 8px;
     }
 
-    /* ---------- Molecular structure images ---------- */
+    /* ---------- Molecular structure labels ---------- */
 
     .mol-title {
         text-align: center;
-        font-size: 0.78rem;
+        font-size: 0.9rem;
         font-weight: 600;
-        margin: 0 0 1px 0;
-        color: #333333;
+        margin: 0 0 8px 0;
+        color: #374151;
     }
 
-    /* Center the image container and image itself */
+    /* ---------- Center molecular images ---------- */
+
     div[data-testid="stImage"] {
         width: 100% !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        margin: 0 auto 2px auto !important;
+        margin: 0 auto 8px auto !important;
     }
 
     div[data-testid="stImage"] img {
@@ -205,66 +188,38 @@ st.markdown(
         object-fit: contain;
     }
 
-    /* Center invalid-SMILES messages */
-    div[data-testid="stCaptionContainer"] {
-        text-align: center;
-    }
-
-    /* ---------- Prediction button ---------- */
-
-    .stButton {
-        margin-top: 1px;
-        margin-bottom: 2px;
-    }
-
-    .stButton > button {
-        min-height: 2.35rem;
-        padding: 0.35rem 0.8rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-        border-radius: 7px;
-    }
-
     /* ---------- Results table ---------- */
 
     div[data-testid="stDataFrame"] {
-        margin-top: 0 !important;
+        margin-top: 4px !important;
         margin-bottom: 0 !important;
     }
 
     /* ---------- Download button ---------- */
 
     .stDownloadButton {
-        margin-top: 1px !important;
+        margin-top: 5px;
     }
 
     .stDownloadButton > button {
-        min-height: 2.1rem;
-        padding: 0.3rem 0.8rem;
-        font-size: 0.8rem;
-    }
-
-    /* ---------- Reduce excess paragraph spacing ---------- */
-
-    .stMarkdown p {
-        margin-bottom: 0.15rem;
+        min-height: 2.3rem;
+        font-size: 0.85rem;
+        border-radius: 7px;
     }
 
     /* ---------- Responsive layout ---------- */
 
     @media (max-width: 700px) {
         .block-container {
-            padding-top: 0.5rem !important;
-            padding-left: 0.65rem !important;
-            padding-right: 0.65rem !important;
+            padding: 0.8rem !important;
         }
 
-        .title-block h2 {
-            font-size: 1.1rem;
+        .main-title {
+            font-size: 1.35rem;
         }
 
         .section-header {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
         }
     }
     </style>
@@ -277,24 +232,25 @@ st.markdown(
 # ===========================================================
 st.markdown(
     """
-    <div class="title-block">
-        <h2>⚗️ Isothermal VLE Predictor</h2>
+    <div class="main-title">
+        ⚗️ Isothermal VLE Predictor
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 # ===========================================================
-# 8. Load AutoGluon models
+# 8. Load AutoGluon predictors
 # ===========================================================
 @st.cache_resource(show_spinner=False)
 def load_predictor_y1():
+
     if not AUTOGLUON_AVAILABLE:
         raise ImportError(AUTOGLUON_ERROR)
 
     if not os.path.isdir(MODEL_Y1_PATH):
         raise FileNotFoundError(
-            f"y₁ model directory not found: {MODEL_Y1_PATH}"
+            f"y1 model directory not found: {MODEL_Y1_PATH}"
         )
 
     return TabularPredictor.load(MODEL_Y1_PATH)
@@ -302,6 +258,7 @@ def load_predictor_y1():
 
 @st.cache_resource(show_spinner=False)
 def load_predictor_p():
+
     if not AUTOGLUON_AVAILABLE:
         raise ImportError(AUTOGLUON_ERROR)
 
@@ -317,6 +274,7 @@ def load_predictor_p():
 # 9. RDKit descriptor calculator
 # ===========================================================
 if RDKIT_AVAILABLE:
+
     desc_names = [
         item[0] for item in Descriptors._descList
     ]
@@ -324,13 +282,14 @@ if RDKIT_AVAILABLE:
     calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
         desc_names
     )
+
 else:
     desc_names = []
     calculator = None
 
 
 def get_mol_features(smiles: str) -> dict:
-    """Calculate RDKit molecular descriptors from SMILES."""
+    """Calculate RDKit descriptors from SMILES."""
 
     if not RDKIT_AVAILABLE:
         raise RuntimeError(
@@ -345,14 +304,13 @@ def get_mol_features(smiles: str) -> dict:
     mol = Chem.MolFromSmiles(smiles)
 
     if mol is None:
-        raise ValueError(
-            f"Invalid SMILES: {smiles}"
-        )
+        raise ValueError(f"Invalid SMILES: {smiles}")
 
     descs = calculator.CalcDescriptors(mol)
     clean = []
 
     for value in descs:
+
         try:
             value = float(value)
 
@@ -369,7 +327,7 @@ def get_mol_features(smiles: str) -> dict:
 
 def mol_to_png_bytes(
     smiles: str,
-    size: tuple = (180, 105),
+    size: tuple = (240, 140),
 ):
     """Generate a 2D molecular structure image."""
 
@@ -398,7 +356,7 @@ def mol_to_png_bytes(
 
 def apply_y1_constraints(y_pred, x_value):
     """
-    Apply physical boundary constraints:
+    Apply boundary constraints:
     0 <= y1 <= 1
     x1 = 0 -> y1 = 0
     x1 = 1 -> y1 = 1
@@ -442,11 +400,12 @@ def prepare_model_input(predictor, input_df):
 
 
 # ===========================================================
-# 10. Main layout: 1:1 ratio
+# 10. Main layout: System Parameters | Molecular Structures
+#     Both columns use a 1:1 ratio.
 # ===========================================================
 col_left, col_right = st.columns(
     [1, 1],
-    gap="medium",
+    gap="large",
 )
 
 # -----------------------------------------------------------
@@ -477,6 +436,7 @@ with col_left:
     row2 = st.columns(2, gap="small")
 
     with row2[0]:
+
         x_input = st.number_input(
             "Liquid mole fraction x₁:",
             min_value=0.0,
@@ -488,6 +448,7 @@ with col_left:
         )
 
     with row2[1]:
+
         temp_input = st.number_input(
             "Temperature T (K):",
             min_value=200.0,
@@ -502,6 +463,7 @@ with col_left:
     row3 = st.columns(2, gap="small")
 
     with row3[0]:
+
         psat1_input = st.number_input(
             "P_sat₁ (kPa):",
             min_value=0.0,
@@ -511,6 +473,7 @@ with col_left:
         )
 
     with row3[1]:
+
         psat2_input = st.number_input(
             "P_sat₂ (kPa):",
             min_value=0.0,
@@ -547,16 +510,36 @@ with col_right:
 
     png_A = mol_to_png_bytes(
         smiles_A,
-        size=(180, 105),
+        size=(240, 140),
     )
 
-    if png_A:
-        st.image(
-            png_A,
-            width=180,
-        )
-    else:
-        st.caption("Invalid SMILES for Component A")
+    # The image occupies the center column.
+    # Equal outer columns keep it centered in the right section.
+    left_space, center_image, right_space = st.columns(
+        [1, 2, 1],
+        gap="small",
+    )
+
+    with center_image:
+
+        if png_A:
+
+            st.image(
+                png_A,
+                use_container_width=True,
+            )
+
+        else:
+
+            st.caption(
+                "Invalid SMILES for Component A"
+            )
+
+    # Spacing between the two structures
+    st.markdown(
+        '<div style="height: 18px;"></div>',
+        unsafe_allow_html=True,
+    )
 
     # Component B
     st.markdown(
@@ -566,16 +549,28 @@ with col_right:
 
     png_B = mol_to_png_bytes(
         smiles_B,
-        size=(180, 105),
+        size=(240, 140),
     )
 
-    if png_B:
-        st.image(
-            png_B,
-            width=180,
-        )
-    else:
-        st.caption("Invalid SMILES for Component B")
+    left_space, center_image, right_space = st.columns(
+        [1, 2, 1],
+        gap="small",
+    )
+
+    with center_image:
+
+        if png_B:
+
+            st.image(
+                png_B,
+                use_container_width=True,
+            )
+
+        else:
+
+            st.caption(
+                "Invalid SMILES for Component B"
+            )
 
 
 # ===========================================================
@@ -583,34 +578,40 @@ with col_right:
 # ===========================================================
 if submit_button:
 
-    # Check dependencies and inputs
+    # Check dependencies
     if not RDKIT_AVAILABLE:
+
         st.error(
             f"RDKit error: {RDKIT_ERROR}"
         )
+
         st.stop()
 
     if not AUTOGLUON_AVAILABLE:
+
         st.error(
             f"AutoGluon error: {AUTOGLUON_ERROR}"
         )
+
         st.stop()
 
     if not smiles_A.strip() or not smiles_B.strip():
+
         st.error(
-            "Please enter valid SMILES for both components."
+            "Please enter SMILES for both components."
         )
+
         st.stop()
 
     try:
 
         with st.spinner("Predicting VLE properties..."):
 
-            # Calculate descriptors for both components
+            # Calculate molecular descriptors
             feat_A = get_mol_features(smiles_A)
             feat_B = get_mol_features(smiles_B)
 
-            # Construct the model input
+            # Construct input features
             input_data = {
                 "x": float(x_input),
                 "T_K": float(temp_input),
@@ -632,7 +633,7 @@ if submit_button:
             pred_y1 = load_predictor_y1()
             pred_P = load_predictor_p()
 
-            # Match the trained model feature columns
+            # Match trained model feature columns
             df_y1, _, _ = prepare_model_input(
                 pred_y1,
                 input_df,
@@ -651,6 +652,7 @@ if submit_button:
             for model_name in Y1_MODELS:
 
                 try:
+
                     raw_prediction = float(
                         pred_y1.predict(
                             df_y1,
@@ -677,6 +679,7 @@ if submit_button:
                     })
 
                 except Exception:
+
                     rows.append({
                         "Model": model_name,
                         "y₁": np.nan,
@@ -689,6 +692,7 @@ if submit_button:
             for model_name in P_MODELS:
 
                 try:
+
                     prediction = float(
                         pred_P.predict(
                             df_P,
@@ -708,13 +712,13 @@ if submit_button:
                     })
 
                 except Exception:
+
                     rows.append({
                         "Model": model_name,
                         "y₁": np.nan,
                         "P (kPa)": np.nan,
                     })
 
-            # Build results table
             results_df = pd.DataFrame(
                 rows,
                 columns=[
@@ -725,7 +729,7 @@ if submit_button:
             )
 
         # ===================================================
-        # 12. Display prediction results
+        # 12. Prediction results
         # ===================================================
         st.markdown(
             '<div class="section-header">'
@@ -752,16 +756,17 @@ if submit_button:
             )
         )
 
-        # Six prediction rows plus the header
+        # Six rows and one header.
+        # Adjust the height to fit the available screen space.
         st.dataframe(
             styled,
             use_container_width=True,
             hide_index=True,
-            height=255,
+            height=270,
         )
 
         # ===================================================
-        # 13. Download prediction results
+        # 13. Download CSV
         # ===================================================
         csv = (
             results_df[display_cols]
@@ -777,14 +782,15 @@ if submit_button:
             key="download_results",
         )
 
-        # Warn if any model prediction failed
+        # Warn if a model failed
         failed_models = results_df[
-            results_df[["y₁", "P (kPa)"]]
-            .isna()
-            .all(axis=1)
+            results_df[
+                ["y₁", "P (kPa)"]
+            ].isna().all(axis=1)
         ]["Model"].tolist()
 
         if failed_models:
+
             st.warning(
                 "Some models did not return predictions: "
                 + ", ".join(failed_models)
@@ -798,6 +804,7 @@ if submit_button:
         )
 
         with st.expander("Technical details"):
+
             st.code(
                 traceback.format_exc()
             )
