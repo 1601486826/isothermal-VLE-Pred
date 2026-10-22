@@ -135,7 +135,7 @@ st.markdown(
     .stTextInput label,
     .stNumberInput label {
         font-size: 0.85rem !important;
-        padding-bottom: 3px !important;
+        padding-bottom: 2px !important;
     }
 
     /* ---------- Input spacing ---------- */
