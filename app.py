@@ -1,9 +1,10 @@
 # -----------------------------------------------------------
-# Isothermal VLE Predictor (y1 & Pressure)
+# Isothermal VLE Predictor (y1 & Pressure) — Optimized Layout
 # Based on RDKit Descriptors and AutoGluon
 # -----------------------------------------------------------
 
 import os
+import io
 import traceback
 import warnings
 
@@ -14,29 +15,29 @@ import streamlit as st
 warnings.filterwarnings("ignore")
 
 # ===========================================================
-# 1. Page configuration
+# 1. Page configuration — centered, compact
 # ===========================================================
 st.set_page_config(
-    layout="wide",
-    page_title="Isothermal VLE Predictor"
+    layout="centered",
+    page_title="Isothermal VLE Predictor",
+    page_icon="️",
 )
 
 # ===========================================================
 # 2. Import RDKit
 # ===========================================================
 try:
-    import rdkit
     from rdkit import Chem
-    from rdkit.Chem import Descriptors
+    from rdkit.Chem import Descriptors, Draw
     from rdkit.ML.Descriptors import MoleculeDescriptors
 
     RDKIT_AVAILABLE = True
     RDKIT_ERROR = None
 
 except Exception as e:
-    rdkit = None
     Chem = None
     Descriptors = None
+    Draw = None
     MoleculeDescriptors = None
 
     RDKIT_AVAILABLE = False
@@ -63,10 +64,7 @@ MODEL_Y1_PATH = "./final_42_y1"
 MODEL_P_PATH = "./final_42_p"
 
 # ===========================================================
-# 5. Fixed model ranking: best to worst
-#
-# The order below is the display ranking.
-# The first model is designated as the champion.
+# 5. Fixed model ranking (best → worst)
 # ===========================================================
 Y1_TOP6_MODELS = [
     "NeuralNetTorch_r22_BAG_L1",
@@ -87,36 +85,95 @@ P_TOP6_MODELS = [
 ]
 
 # ===========================================================
-# 6. Page style
+# 6. Page style — fixed viewport, no scroll
 # ===========================================================
 st.markdown(
     """
     <style>
+    /* Lock page height to viewport, hide scrollbars */
+    html, body, [class*="css"] {
+        overflow: hidden !important;
+        height: 100vh !important;
+    }
     .stApp {
-        border: 2px solid #808080;
-        border-radius: 20px;
-        margin: 20px auto;
-        max-width: 100%;
-        background-color: #f9f9f9;
-        padding: 20px;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 18px 24px 10px 24px;
         box-sizing: border-box;
+        overflow: hidden;
     }
-
-    .rounded-container h2 {
-        text-align: center;
-        background-color: #e0e0e0;
-        padding: 12px;
-        border-radius: 10px;
+    /* Compact headers */
+    .stApp h1, .stApp h2, .stApp h3 {
         margin-top: 0;
+        margin-bottom: 6px;
     }
-
-    .rounded-container blockquote {
-        text-align: left;
-        margin: 20px auto;
-        background-color: #f0f0f0;
-        padding: 12px;
-        font-size: 1.05em;
+    /* Compact inputs */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input {
+        font-size: 0.85rem !important;
+    }
+    /* Compact dataframe */
+    .stDataFrame {
+        font-size: 0.82rem !important;
+    }
+    /* Hide default Streamlit footer / menu clutter */
+    #MainMenu { visibility: hidden; }
+    footer { visibility: hidden; }
+    /* Title block */
+    .title-block {
+        text-align: center;
+        background: linear-gradient(135deg, #e8eaf6, #f3e5f5);
+        padding: 10px 16px;
         border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    .title-block h2 {
+        margin: 0;
+        font-size: 1.35rem;
+    }
+    .title-block p {
+        margin: 4px 0 0 0;
+        font-size: 0.82rem;
+        color: #555;
+    }
+    /* Section headers */
+    .section-header {
+        font-size: 1.0rem;
+        font-weight: 700;
+        border-left: 4px solid #6c63ff;
+        padding-left: 8px;
+        margin: 6px 0 8px 0;
+    }
+    /* Molecule card */
+    .mol-card {
+        background: #fafafa;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 8px;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    .mol-card .mol-name {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 2px;
+    }
+    .mol-card .mol-smiles {
+        font-size: 0.72rem;
+        color: #888;
+        font-family: monospace;
+        word-break: break-all;
+    }
+    /* Champion badge */
+    .champion-badge {
+        display: inline-block;
+        background: #fff3cd;
+        color: #856404;
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin-left: 6px;
     }
     </style>
     """,
@@ -124,612 +181,322 @@ st.markdown(
 )
 
 # ===========================================================
-# 7. Page title
+# 7. Title
 # ===========================================================
 st.markdown(
     """
-    <div class="rounded-container">
-        <h2>Isothermal VLE Predictor (y1 & Pressure)</h2>
-        <blockquote>
-            This web app predicts the vapor-phase mole fraction (y1)
-            and equilibrium pressure (P) for binary mixtures using
-            RDKit molecular descriptors and trained AutoGluon models.
-        </blockquote>
+    <div class="title-block">
+        <h2>⚗️ Isothermal VLE Predictor</h2>
+        <p>Predicts vapor-phase mole fraction (y₁) and equilibrium pressure (P)
+           for binary mixtures using RDKit descriptors &amp; AutoGluon models.</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 # ===========================================================
-# 8. Model loading
+# 8. Model loading (cached)
 # ===========================================================
-@st.cache_resource(show_spinner="Loading Y1 Model...")
+@st.cache_resource(show_spinner="Loading y₁ model...")
 def load_predictor_y1():
     if not AUTOGLUON_AVAILABLE:
-        raise ImportError(
-            f"AutoGluon import failed: {AUTOGLUON_ERROR}"
-        )
-
+        raise ImportError(f"AutoGluon import failed: {AUTOGLUON_ERROR}")
     if not os.path.isdir(MODEL_Y1_PATH):
-        raise FileNotFoundError(
-            f"Y1 model directory not found: {MODEL_Y1_PATH}"
-        )
-
+        raise FileNotFoundError(f"Y1 model directory not found: {MODEL_Y1_PATH}")
     return TabularPredictor.load(MODEL_Y1_PATH)
 
 
-@st.cache_resource(show_spinner="Loading Pressure Model...")
+@st.cache_resource(show_spinner="Loading Pressure model...")
 def load_predictor_p():
     if not AUTOGLUON_AVAILABLE:
-        raise ImportError(
-            f"AutoGluon import failed: {AUTOGLUON_ERROR}"
-        )
-
+        raise ImportError(f"AutoGluon import failed: {AUTOGLUON_ERROR}")
     if not os.path.isdir(MODEL_P_PATH):
-        raise FileNotFoundError(
-            f"Pressure model directory not found: {MODEL_P_PATH}"
-        )
-
+        raise FileNotFoundError(f"Pressure model directory not found: {MODEL_P_PATH}")
     return TabularPredictor.load(MODEL_P_PATH)
 
 
 # ===========================================================
-# 9. RDKit descriptor initialization
+# 9. RDKit descriptor calculator
 # ===========================================================
 if RDKIT_AVAILABLE:
-    desc_names = [
-        item[0] for item in Descriptors._descList
-    ]
-
-    calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
-        desc_names
-    )
+    desc_names = [item[0] for item in Descriptors._descList]
+    calculator = MoleculeDescriptors.MolecularDescriptorCalculator(desc_names)
 else:
     desc_names = []
     calculator = None
 
 
 # ===========================================================
-# 10. Calculate molecular descriptors
+# 10. Molecular descriptors
 # ===========================================================
-def get_mol_features(smiles):
-    """
-    Convert a SMILES string into RDKit molecular descriptors.
-    """
+def get_mol_features(smiles: str) -> dict:
     if not RDKIT_AVAILABLE or calculator is None:
-        raise RuntimeError(
-            f"RDKit is unavailable: {RDKIT_ERROR}"
-        )
+        raise RuntimeError(f"RDKit is unavailable: {RDKIT_ERROR}")
 
     smiles = str(smiles).strip()
-
     if not smiles:
         raise ValueError("SMILES cannot be empty.")
 
     mol = Chem.MolFromSmiles(smiles)
-
     if mol is None:
-        raise ValueError(
-            f"Invalid SMILES string: {smiles}"
-        )
+        raise ValueError(f"Invalid SMILES string: {smiles}")
 
     descs = calculator.CalcDescriptors(mol)
-
-    clean_descs = []
-
-    for value in descs:
+    clean = []
+    for v in descs:
         try:
-            value = float(value)
-
-            if not np.isfinite(value):
-                value = np.nan
-
+            v = float(v)
+            if not np.isfinite(v):
+                v = np.nan
         except (TypeError, ValueError, OverflowError):
-            value = np.nan
-
-        clean_descs.append(value)
-
-    return dict(zip(desc_names, clean_descs))
+            v = np.nan
+        clean.append(v)
+    return dict(zip(desc_names, clean))
 
 
 # ===========================================================
-# 11. Y1 physical constraints
+# 11. RDKit 2D molecule image (PNG bytes)
+# ===========================================================
+def mol_to_png_bytes(smiles: str, size: tuple = (220, 180)) -> bytes | None:
+    """Return PNG bytes of a 2D RDKit drawing, or None on failure."""
+    if not RDKIT_AVAILABLE:
+        return None
+    mol = Chem.MolFromSmiles(str(smiles).strip())
+    if mol is None:
+        return None
+    try:
+        img = Draw.MolToImage(mol, size=size)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
+# ===========================================================
+# 12. Y1 physical constraints
 # ===========================================================
 def apply_y1_constraints(y_pred, x_value):
-    """
-    Apply physical constraints to vapor-phase mole fraction.
-
-    1. Clip predictions to [0, 1].
-    2. If x == 0, set y = 0.
-    3. If x == 1, set y = 1.
-    """
-    y_pred = np.asarray(
-        y_pred, dtype=float
-    ).reshape(-1).copy()
-
-    x_value = np.asarray(
-        x_value, dtype=float
-    ).reshape(-1)
-
+    y_pred = np.asarray(y_pred, dtype=float).reshape(-1).copy()
+    x_value = np.asarray(x_value, dtype=float).reshape(-1)
     if len(y_pred) != len(x_value):
-        raise ValueError(
-            "Prediction and x arrays have different lengths."
-        )
-
+        raise ValueError("Prediction and x arrays have different lengths.")
     if not np.all(np.isfinite(y_pred)):
-        raise ValueError(
-            "The Y1 model returned a non-finite prediction."
-        )
-
+        raise ValueError("The Y1 model returned a non-finite prediction.")
     y_pred = np.clip(y_pred, 0.0, 1.0)
-
     y_pred[x_value == 0.0] = 0.0
     y_pred[x_value == 1.0] = 1.0
-
     return y_pred
 
 
 # ===========================================================
-# 12. Validate model feature names
+# 13. Align input to model features
 # ===========================================================
 def prepare_model_input(predictor, input_df):
-    """
-    Align input columns to the features expected by the predictor.
-
-    Missing columns are filled with 0.
-    Verify training/deployment feature consistency if any are missing.
-    """
     model_features = predictor.feature_metadata.get_features()
-
-    missing_features = [
-        feature
-        for feature in model_features
-        if feature not in input_df.columns
-    ]
-
-    extra_features = [
-        feature
-        for feature in input_df.columns
-        if feature not in model_features
-    ]
-
-    predict_df = input_df.reindex(
-        columns=model_features,
-        fill_value=0
-    )
-
-    return predict_df, missing_features, extra_features
+    predict_df = input_df.reindex(columns=model_features, fill_value=0)
+    missing = [f for f in model_features if f not in input_df.columns]
+    extra = [f for f in input_df.columns if f not in model_features]
+    return predict_df, missing, extra
 
 
 # ===========================================================
-# 13. Display formatting
+# 14. Two-column layout: Inputs | Molecule 2D
 # ===========================================================
-def display_results_table(results_df, target_name):
-    """
-    Display results in fixed ranking order.
+col_left, col_right = st.columns([1.1, 0.9], gap="small")
 
-    Champion:
-        The first model in the corresponding model list.
+with col_left:
+    st.markdown('<div class="section-header">System Parameters</div>', unsafe_allow_html=True)
 
-    Y1:
-        Model | Pred y1 | Status
+    smiles_A = st.text_input("Component A (SMILES):", value="CCCO", placeholder="e.g., CCO")
+    smiles_B = st.text_input("Component B (SMILES):", value="CCC(=O)OC", placeholder="e.g., CCC(=O)OC")
 
-    Pressure:
-        Model | Predicted Pressure (kPa) | Status
-    """
-    results_df = results_df.copy()
+    row2 = st.columns(2)
+    with row2[0]:
+        x_input = st.number_input(
+            "Liquid mole fraction x₁:",
+            min_value=0.0, max_value=1.0, value=0.5, step=0.01, format="%.4f",
+        )
+    with row2[1]:
+        temp_input = st.number_input(
+            "Temperature T (K):",
+            min_value=200.0, max_value=1000.0, value=328.15, step=0.1, format="%.2f",
+        )
 
-    # Remove raw predictions if present.
-    results_df = results_df.drop(
-        columns=["Raw Prediction", "Constrained y1"],
-        errors="ignore"
+    row3 = st.columns(2)
+    with row3[0]:
+        psat1_input = st.number_input(
+            "P_sat₁ (kPa):",
+            min_value=0.0, value=15.63616116, format="%.6f",
+        )
+    with row3[1]:
+        psat2_input = st.number_input(
+            "P_sat₂ (kPa):",
+            min_value=0.0, value=42.16941721, format="%.6f",
+        )
+
+    submit_button = st.button("🚀 Submit & Predict Both", type="primary", use_container_width=True)
+
+with col_right:
+    st.markdown('<div class="section-header">Molecular Structures (2D)</div>', unsafe_allow_html=True)
+
+    # Component A card
+    png_A = mol_to_png_bytes(smiles_A)
+    st.markdown(
+        f"""
+        <div class="mol-card">
+            <div class="mol-name">Component A</div>
+            <div class="mol-smiles">{smiles_A if smiles_A.strip() else "—"}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-
-    # Use the requested Y1 column name.
-    if target_name == "y1":
-        if "Pred y1" not in results_df.columns:
-            raise ValueError(
-                "The results table is missing the 'Pred y1' column."
-            )
-
-        display_columns = [
-            "Rank",
-            "Model",
-            "Pred y1",
-            "Status",
-        ]
-
+    if png_A:
+        st.image(png_A, use_container_width=True)
     else:
-        display_columns = [
-            "Rank",
-            "Model",
-            "Predicted Pressure (kPa)",
-            "Status",
-        ]
+        st.info("Enter a valid SMILES to view structure.")
 
-    # Keep only the intended display columns.
-    results_df = results_df[display_columns]
-
-    # Bold the champion row.
-    def highlight_champion(row):
-        if row.name == 0:
-            return [
-                "font-weight: bold"
-                for _ in row
-            ]
-
-        return ["" for _ in row]
-
-    styled_df = (
-        results_df.style
-        .apply(highlight_champion, axis=1)
+    # Component B card
+    png_B = mol_to_png_bytes(smiles_B)
+    st.markdown(
+        f"""
+        <div class="mol-card">
+            <div class="mol-name">Component B</div>
+            <div class="mol-smiles">{smiles_B if smiles_B.strip() else "—"}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-
-    st.dataframe(
-        styled_df,
-        use_container_width=True,
-        hide_index=True
-    )
+    if png_B:
+        st.image(png_B, use_container_width=True)
+    else:
+        st.info("Enter a valid SMILES to view structure.")
 
 
 # ===========================================================
-# 14. Input interface
-# ===========================================================
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("System Parameters")
-
-    model_choice = st.selectbox(
-        "Select Target to Predict:",
-        [
-            "y1 (Vapor mole fraction)",
-            "P (Equilibrium pressure)"
-        ]
-    )
-
-    smiles_A = st.text_input(
-        "Component A (Input SMILES):",
-        value="CCCO",
-        placeholder="e.g., CCO"
-    )
-
-    smiles_B = st.text_input(
-        "Component B (Input SMILES):",
-        value="CCC(=O)OC",
-        placeholder="e.g., O"
-    )
-
-    x_input = st.number_input(
-        "Liquid-phase mole fraction of component A (x):",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.5,
-        step=0.01,
-        format="%.4f"
-    )
-
-    temp_input = st.number_input(
-        "Operating Temperature (T_K):",
-        min_value=200.0,
-        max_value=1000.0,
-        value=328.15,
-        step=0.1,
-        format="%.2f"
-    )
-
-with col2:
-    st.subheader("Saturation Pressures")
-
-    psat1_input = st.number_input(
-        "Psat1 (kPa):",
-        min_value=0.0,
-        value=15.63616116,
-        format="%.8f"
-    )
-
-    psat2_input = st.number_input(
-        "Psat2 (kPa):",
-        min_value=0.0,
-        value=42.16941721,
-        format="%.8f"
-    )
-
-submit_button = st.button(
-    "Submit and Predict",
-    type="primary",
-    use_container_width=True
-)
-
-
-# ===========================================================
-# 15. Main prediction logic
+# 15. Main prediction logic — both models at once
 # ===========================================================
 if submit_button:
 
-    # -------------------- Dependency checks --------------------
+    # ---- Dependency checks ----
     if not RDKIT_AVAILABLE:
-        st.error("RDKit failed to load.")
-        st.code(RDKIT_ERROR or "Unknown RDKit error")
-        st.stop()
-
+        st.error("RDKit failed to load."); st.code(RDKIT_ERROR or "Unknown error"); st.stop()
     if not AUTOGLUON_AVAILABLE:
-        st.error("AutoGluon failed to load.")
-        st.code(AUTOGLUON_ERROR or "Unknown AutoGluon error")
-        st.stop()
+        st.error("AutoGluon failed to load."); st.code(AUTOGLUON_ERROR or "Unknown error"); st.stop()
 
-    # -------------------- Input validation --------------------
+    # ---- Input validation ----
     if not smiles_A.strip() or not smiles_B.strip():
-        st.error(
-            "Please enter SMILES for both components."
-        )
-        st.stop()
+        st.error("Please enter SMILES for both components."); st.stop()
 
-    with st.spinner(
-        "Calculating descriptors and predicting with six models..."
-    ):
+    with st.spinner("Calculating descriptors & predicting with 12 models (6×y₁ + 6×P)..."):
         try:
-            # -----------------------------------------------
-            # Step 1. Calculate RDKit descriptors
-            # -----------------------------------------------
+            # ---- Step 1. Descriptors ----
             feat_A = get_mol_features(smiles_A)
             feat_B = get_mol_features(smiles_B)
 
-            # -----------------------------------------------
-            # Step 2. Assemble input features
-            # -----------------------------------------------
+            # ---- Step 2. Assemble input ----
             input_data = {
                 "x": float(x_input),
                 "T_K": float(temp_input),
                 "P_sat_1": float(psat1_input),
                 "P_sat_2": float(psat2_input),
             }
-
-            for key, value in feat_A.items():
-                input_data[f"c1_{key}"] = value
-
-            for key, value in feat_B.items():
-                input_data[f"c2_{key}"] = value
-
+            for k, v in feat_A.items():
+                input_data[f"c1_{k}"] = v
+            for k, v in feat_B.items():
+                input_data[f"c2_{k}"] = v
             input_df = pd.DataFrame([input_data])
 
-            # -----------------------------------------------
-            # Step 3. Load the selected Predictor
-            # -----------------------------------------------
-            if model_choice.startswith("y1"):
-                predictor = load_predictor_y1()
-                target_name = "y1"
-                selected_models = Y1_TOP6_MODELS
-            else:
-                predictor = load_predictor_p()
-                target_name = "Pressure"
-                selected_models = P_TOP6_MODELS
+            # ---- Step 3. Load both predictors ----
+            pred_y1 = load_predictor_y1()
+            pred_P = load_predictor_p()
 
-            # -----------------------------------------------
-            # Step 4. Align model input features
-            # -----------------------------------------------
-            (
-                predict_df,
-                missing_features,
-                extra_features,
-            ) = prepare_model_input(
-                predictor,
-                input_df
-            )
+            # ---- Step 4. Align features ----
+            df_y1, miss_y1, extra_y1 = prepare_model_input(pred_y1, input_df)
+            df_P, miss_P, extra_P = prepare_model_input(pred_P, input_df)
 
-            with st.expander(
-                "View Input Features",
-                expanded=False
-            ):
-                st.dataframe(
-                    predict_df.T.rename(
-                        columns={0: "Input Value"}
-                    ),
-                    use_container_width=True
-                )
+            # ---- Step 5. Predict with all 6+6 models ----
+            rows = []
 
-                if missing_features:
-                    st.warning(
-                        f"{len(missing_features)} expected model "
-                        "features were not generated and were filled "
-                        "with 0. Verify feature consistency."
-                    )
-                    st.code("\n".join(missing_features))
-
-                if extra_features:
-                    st.caption(
-                        f"{len(extra_features)} extra input features "
-                        "were not used by this Predictor."
-                    )
-
-            # -----------------------------------------------
-            # Step 5. Check specified model names
-            # -----------------------------------------------
-            available_models = predictor.model_names()
-
-            missing_models = [
-                name
-                for name in selected_models
-                if name not in available_models
-            ]
-
-            if missing_models:
-                st.warning(
-                    "Some selected model names were not found "
-                    "in the loaded Predictor. Check the saved "
-                    "model directory and its metadata."
-                )
-                st.code("\n".join(missing_models))
-
-            # -----------------------------------------------
-            # Step 6. Predict with each specified model
-            # -----------------------------------------------
-            st.subheader(
-                "Six-Model Prediction Results"
-            )
-
-            # The first model is the designated champion.
-            champion_model = selected_models[0]
-
-            st.caption(
-                f"🏆 Champion model: {champion_model}"
-            )
-
-            results = []
-
-            for rank, model_name in enumerate(
-                selected_models,
-                start=1
-            ):
-                # Mark champion with an icon in the display name.
-                display_model_name = (
-                    f"🏆 {model_name}"
-                    if model_name == champion_model
-                    else model_name
-                )
-
+            # Y1 models
+            for rank, m in enumerate(Y1_TOP6_MODELS, 1):
                 try:
-                    raw_pred = predictor.predict(
-                        predict_df,
-                        model=model_name
-                    )
+                    raw = float(pred_y1.predict(df_y1, model=m).iloc[0])
+                    if not np.isfinite(raw):
+                        raise ValueError("Non-finite prediction.")
+                    constrained = apply_y1_constraints([raw], [x_input])
+                    rows.append({
+                        "Model": m,
+                        "y₁ (vapor mole fraction)": float(constrained[0]),
+                        "P (kPa)": "—",
+                        "Is Champion": " Y1" if rank == 1 else "",
+                    })
+                except Exception as e:
+                    rows.append({
+                        "Model": m,
+                        "y₁ (vapor mole fraction)": np.nan,
+                        "P (kPa)": "—",
+                        "Is Champion": "❌",
+                    })
 
-                    raw_value = float(raw_pred.iloc[0])
+            # Pressure models
+            for rank, m in enumerate(P_TOP6_MODELS, 1):
+                try:
+                    raw = float(pred_P.predict(df_P, model=m).iloc[0])
+                    if not np.isfinite(raw):
+                        raise ValueError("Non-finite prediction.")
+                    rows.append({
+                        "Model": m,
+                        "y₁ (vapor mole fraction)": "—",
+                        "P (kPa)": raw,
+                        "Is Champion": "🏆 P" if rank == 1 else "",
+                    })
+                except Exception as e:
+                    rows.append({
+                        "Model": m,
+                        "y₁ (vapor mole fraction)": "—",
+                        "P (kPa)": np.nan,
+                        "Is Champion": "❌",
+                    })
 
-                    if not np.isfinite(raw_value):
-                        raise ValueError(
-                            "The model returned a non-finite prediction."
-                        )
+            results_df = pd.DataFrame(rows)
 
-                    if target_name == "y1":
+            # ---- Step 6. Display ----
+            st.markdown('<div class="section-header">Prediction Results</div>', unsafe_allow_html=True)
 
-                        constrained_pred = apply_y1_constraints(
-                            [raw_value],
-                            [x_input]
-                        )
-
-                        final_value = float(
-                            constrained_pred[0]
-                        )
-
-                        results.append({
-                            "Rank": rank,
-                            "Model": display_model_name,
-                            "Pred y1": final_value,
-                            "Status": "Success",
-                        })
-
-                    else:
-                        # Do not apply Y1 constraints to pressure.
-                        results.append({
-                            "Rank": rank,
-                            "Model": display_model_name,
-                            "Predicted Pressure (kPa)": raw_value,
-                            "Status": "Success",
-                        })
-
-                except Exception as model_error:
-
-                    if target_name == "y1":
-                        results.append({
-                            "Rank": rank,
-                            "Model": display_model_name,
-                            "Pred y1": np.nan,
-                            "Status": (
-                                f"Failed: {str(model_error)}"
-                            ),
-                        })
-
-                    else:
-                        results.append({
-                            "Rank": rank,
-                            "Model": display_model_name,
-                            "Predicted Pressure (kPa)": np.nan,
-                            "Status": (
-                                f"Failed: {str(model_error)}"
-                            ),
-                        })
-
-            # -----------------------------------------------
-            # Step 7. Display results in fixed ranking order
-            # -----------------------------------------------
-            results_df = pd.DataFrame(results)
-
-            # Explicitly sort by the preset rank.
-            results_df = (
-                results_df
-                .sort_values("Rank", ascending=True)
-                .reset_index(drop=True)
+            y1_champ = Y1_TOP6_MODELS[0]
+            p_champ = P_TOP6_MODELS[0]
+            st.caption(
+                f"🏆 Champion y₁ model: **{y1_champ}** &nbsp;|&nbsp; "
+                f"🏆 Champion P model: **{p_champ}**"
             )
 
-            display_results_table(
-                results_df,
-                target_name
+            # Highlight champion rows
+            def highlight_champ(row):
+                styles = [""] * len(row)
+                if row["Is Champion"].startswith(""):
+                    styles = ["background-color:#fff9c4; font-weight:bold"] * len(row)
+                return styles
+
+            display_cols = ["Model", "y₁ (vapor mole fraction)", "P (kPa)", "Is Champion"]
+            styled = (
+                results_df[display_cols]
+                .style
+                .apply(highlight_champ, axis=1)
+                .format({"y₁ (vapor mole fraction)": "{:.6f}", "P (kPa)": "{:.4f}"})
             )
+            st.dataframe(styled, use_container_width=True, hide_index=True)
 
-            success_count = int(
-                (results_df["Status"] == "Success").sum()
-            )
-
-            st.write(
-                f"Successful predictions: "
-                f"{success_count}/{len(selected_models)}"
-            )
-
-            if success_count == 0:
-                st.error(
-                    "All six model predictions failed. "
-                    "Please inspect the error messages in the table."
-                )
-
-            elif success_count < len(selected_models):
-                st.warning(
-                    "Some models failed. Only successful model "
-                    "predictions should be used."
-                )
-
-            # -----------------------------------------------
-            # Step 8. Download results as CSV
-            # -----------------------------------------------
-            csv_data = results_df.to_csv(
-                index=False
-            ).encode("utf-8-sig")
-
-            file_name = (
-                "Y1_top6_predictions.csv"
-                if target_name == "y1"
-                else "Pressure_top6_predictions.csv"
-            )
-
+            # ---- Step 7. Download CSV ----
+            csv = results_df[display_cols].to_csv(index=False).encode("utf-8-sig")
             st.download_button(
-                label="Download Predictions (CSV)",
-                data=csv_data,
-                file_name=file_name,
-                mime="text/csv"
+                label="⬇️ Download Results (CSV)",
+                data=csv,
+                file_name="VLE_predictions.csv",
+                mime="text/csv",
             )
-
-            # -----------------------------------------------
-            # Step 9. Display system parameters
-            # -----------------------------------------------
-            with st.expander(
-                "View System Parameters",
-                expanded=False
-            ):
-                st.write({
-                    "Component A SMILES": smiles_A,
-                    "Component B SMILES": smiles_B,
-                    "Liquid mole fraction x1": x_input,
-                    "Temperature (K)": temp_input,
-                    "Psat1 (kPa)": psat1_input,
-                    "Psat2 (kPa)": psat2_input,
-                    "Prediction target": target_name,
-                    "Champion model": champion_model,
-                })
 
         except Exception as e:
-            st.error(
-                f"An error occurred during prediction: {str(e)}"
-            )
-
+            st.error(f"Prediction error: {e}")
             with st.expander("Technical details"):
                 st.code(traceback.format_exc())
