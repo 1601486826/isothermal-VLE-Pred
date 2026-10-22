@@ -142,7 +142,7 @@ st.markdown(
 
     .stTextInput,
     .stNumberInput {
-        margin-bottom: 0.35rem !important;
+        margin-bottom: 0.2rem !important;
     }
 
     .stTextInput input,
