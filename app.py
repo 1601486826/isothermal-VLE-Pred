@@ -1,5 +1,5 @@
 # -----------------------------------------------------------
-# Isothermal VLE Predictor (Optimized: Compact & Simultaneous)
+# Isothermal VLE Predictor (Final Optimized Version)
 # -----------------------------------------------------------
 
 import os
@@ -53,7 +53,7 @@ MODEL_Y1_PATH = "./final_42_y1"
 MODEL_P_PATH = "./final_42_p"
 
 # ===========================================================
-# 5. Model lists (We will only use the top 3 of each)
+# 5. Model lists (Top 3 only)
 # ===========================================================
 Y1_MODELS_FULL = [
     "NeuralNetTorch_r22_BAG_L1", "NeuralNetTorch_r41_BAG_L1",
@@ -65,77 +65,100 @@ P_MODELS_FULL = [
     "LightGBMXT_BAG_L1", "LightGBM_r131_BAG_L2", "LightGBMLarge_BAG_L2",
 ]
 
-# Take only top 3 as requested
 Y1_MODELS = Y1_MODELS_FULL[:3]
 P_MODELS = P_MODELS_FULL[:3]
 
 # ===========================================================
-# 6. Page style (Compact & Fixed Height)
+# 6. Page style (Compact, No Scroll, Centered Images)
 # ===========================================================
 st.markdown(
     """
     <style>
-    /* Force no scroll and compact layout */
+    /* 1. Force no scroll for the whole page */
     html, body, [class*="css"] {
         overflow: hidden !important;
         height: 100vh !important;
     }
-    .stApp {
+    
+    /* 2. Reduce top padding significantly */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
         max-width: 900px;
-        margin: 0 auto;
-        padding: 10px 20px;
-        box-sizing: border-box;
-        overflow: hidden;
     }
-    /* Compact headers */
+    
+    /* 3. Compact typography */
     .stApp h1, .stApp h2, .stApp h3 {
-        margin-top: 0; margin-bottom: 5px;
+        margin-top: 0; margin-bottom: 4px;
         font-size: 1.1rem;
     }
-    .stApp p { margin-bottom: 5px; }
+    .stApp p { margin-bottom: 4px; }
     
-    /* Compact inputs */
+    /* 4. Compact inputs */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input {
         font-size: 0.8rem !important;
         padding: 0.2rem 0.5rem !important;
     }
     .stNumberInput label, .stTextInput label {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         margin-bottom: 2px;
     }
+    /* Remove extra margin below inputs */
+    .stTextInput, .stNumberInput {
+        margin-bottom: 0.5rem;
+    }
     
-    /* Title block */
+    /* 5. Title block compact */
     .title-block {
         text-align: center;
         background: #f0f2f6;
-        padding: 8px;
+        padding: 6px;
         border-radius: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
-    .title-block h2 { font-size: 1.2rem; margin: 0; }
-    .title-block p { font-size: 0.75rem; color: #666; margin: 2px 0 0 0; }
+    .title-block h2 { font-size: 1.1rem; margin: 0; }
+    .title-block p { font-size: 0.7rem; color: #666; margin: 2px 0 0 0; }
     
-    /* Section headers */
+    /* 6. Section headers */
     .section-header {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 700;
         border-left: 4px solid #6c63ff;
         padding-left: 8px;
-        margin: 5px 0 8px 0;
+        margin: 5px 0 6px 0;
     }
     
-    /* Molecule card */
-    .mol-card {
-        background: #fafafa;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        padding: 4px;
+    /* 7. Center images and compact cards */
+    .stImage {
         text-align: center;
+        display: flex;
+        justify-content: center;
         margin-bottom: 5px;
     }
-    .mol-name { font-size: 0.75rem; font-weight: 600; }
-    .mol-smiles { font-size: 0.65rem; color: #888; font-family: monospace; }
+    .mol-title {
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 2px;
+        color: #333;
+    }
+    
+    /* 8. Compact button */
+    .stButton > button {
+        padding: 0.4rem 1rem;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+    
+    /* 9. Compact dataframe */
+    .stDataFrame {
+        font-size: 0.75rem !important;
+    }
+    /* Hide dataframe scrollbar if possible, or make it subtle */
+    .stDataFrame::-webkit-scrollbar {
+        display: none; 
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -157,13 +180,13 @@ st.markdown(
 # ===========================================================
 # 8. Model loading
 # ===========================================================
-@st.cache_resource(show_spinner="Loading y₁ model...")
+@st.cache_resource(show_spinner=False) # Hide spinner to save space/time
 def load_predictor_y1():
     if not AUTOGLUON_AVAILABLE: raise ImportError(AUTOGLUON_ERROR)
     if not os.path.isdir(MODEL_Y1_PATH): raise FileNotFoundError(MODEL_Y1_PATH)
     return TabularPredictor.load(MODEL_Y1_PATH)
 
-@st.cache_resource(show_spinner="Loading Pressure model...")
+@st.cache_resource(show_spinner=False)
 def load_predictor_p():
     if not AUTOGLUON_AVAILABLE: raise ImportError(AUTOGLUON_ERROR)
     if not os.path.isdir(MODEL_P_PATH): raise FileNotFoundError(MODEL_P_PATH)
@@ -194,7 +217,7 @@ def get_mol_features(smiles: str) -> dict:
         clean.append(v)
     return dict(zip(desc_names, clean))
 
-def mol_to_png_bytes(smiles: str, size: tuple = (160, 120)) -> bytes | None:
+def mol_to_png_bytes(smiles: str, size: tuple = (140, 100)) -> bytes | None:
     if not RDKIT_AVAILABLE: return None
     mol = Chem.MolFromSmiles(str(smiles).strip())
     if mol is None: return None
@@ -218,12 +241,15 @@ def prepare_model_input(predictor, input_df):
 # ===========================================================
 # 10. Layout: Inputs (Left) | Molecules (Right)
 # ===========================================================
-col_left, col_right = st.columns([1.2, 0.8], gap="small")
+col_left, col_right = st.columns([1.3, 0.7], gap="small")
 
 with col_left:
     st.markdown('<div class="section-header">System Parameters</div>', unsafe_allow_html=True)
     
-    smiles_A = st.text_input("Component A (SMILES):", value="CCCO")
+    smiles_A = st.text_input("Component A (SMILES):", value="CCCO", label_visibility="collapsed" if False else "visible")
+    # Note: Keeping labels visible as per original request, but CSS makes them small.
+    # If you want to hide labels, use label_visibility="collapsed"
+    
     smiles_B = st.text_input("Component B (SMILES):", value="CCC(=O)OC")
     
     row2 = st.columns(2)
@@ -240,16 +266,20 @@ with col_right:
     st.markdown('<div class="section-header">Molecular Structures (2D)</div>', unsafe_allow_html=True)
     
     # Component A
-    png_A = mol_to_png_bytes(smiles_A, size=(160, 120))
-    st.markdown(f'<div class="mol-card"><div class="mol-name">Component A</div><div class="mol-smiles">{smiles_A[:15]}...</div></div>', unsafe_allow_html=True)
-    if png_A: st.image(png_A, width=160) # Fixed width to keep it small
-    else: st.caption("Invalid SMILES A")
+    st.markdown('<div class="mol-title">Component A</div>', unsafe_allow_html=True)
+    png_A = mol_to_png_bytes(smiles_A, size=(140, 100))
+    if png_A: 
+        st.image(png_A, width=140) 
+    else: 
+        st.caption("Invalid SMILES")
 
     # Component B
-    png_B = mol_to_png_bytes(smiles_B, size=(160, 120))
-    st.markdown(f'<div class="mol-card"><div class="mol-name">Component B</div><div class="mol-smiles">{smiles_B[:15]}...</div></div>', unsafe_allow_html=True)
-    if png_B: st.image(png_B, width=160) # Fixed width to keep it small
-    else: st.caption("Invalid SMILES B")
+    st.markdown('<div class="mol-title">Component B</div>', unsafe_allow_html=True)
+    png_B = mol_to_png_bytes(smiles_B, size=(140, 100))
+    if png_B: 
+        st.image(png_B, width=140)
+    else: 
+        st.caption("Invalid SMILES")
 
 
 # ===========================================================
@@ -260,7 +290,8 @@ if submit_button:
     if not AUTOGLUON_AVAILABLE: st.error("AutoGluon error"); st.stop()
     if not smiles_A.strip() or not smiles_B.strip(): st.error("Enter SMILES"); st.stop()
 
-    with st.spinner("Predicting top 3 models for y₁ and P..."):
+    # Use a small spinner or just run
+    with st.spinner("Predicting..."):
         try:
             feat_A = get_mol_features(smiles_A)
             feat_B = get_mol_features(smiles_B)
@@ -299,21 +330,26 @@ if submit_button:
 
             results_df = pd.DataFrame(rows)
             
-            st.markdown('<div class="section-header">Prediction Results (Top 3 Models)</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-header">Prediction Results (Top 3 Models Each)</div>', unsafe_allow_html=True)
             
-            # Simple table, no champion column
             display_cols = ["Model", "y₁", "P (kPa)"]
+            
+            # Format: 6 decimal places for y1, 4 for P. Replace NaN with "—"
             styled = (
                 results_df[display_cols]
                 .style
                 .format({"y₁": "{:.6f}", "P (kPa)": "{:.4f}"}, na_rep="—")
             )
-            st.dataframe(styled, use_container_width=True, hide_index=True, height=180)
+            
+            # Display table. Height is auto, but CSS limits page scroll.
+            # 6 rows + header should fit easily.
+            st.dataframe(styled, use_container_width=True, hide_index=True)
 
-            # Download
+            # Download button (compact)
             csv = results_df[display_cols].fillna("—").to_csv(index=False).encode("utf-8-sig")
             st.download_button("⬇️ Download CSV", data=csv, file_name="VLE_results.csv", mime="text/csv")
 
         except Exception as e:
             st.error(f"Error: {e}")
+            # Use expander to save space on error
             with st.expander("Details"): st.code(traceback.format_exc())
