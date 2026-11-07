@@ -677,7 +677,7 @@ if st.session_state.get("has_prediction", False):
             },
         )
 
-        with st.expander("View the 20 predicted <i>p-x-y</i> data points"):
+        with st.expander("View the 20 predicted p-x-y data points"):
             st.dataframe(
                 st.session_state["phase_df"].style.format({
                     "x1 (liquid)": "{:.4f}",
