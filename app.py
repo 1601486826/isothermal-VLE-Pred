@@ -1,6 +1,6 @@
 # -----------------------------------------------------------
 # Isothermal VLE Predictor
-# Optimized layout: Results under Parameters, aligned with Diagram
+# Optimized Layout: Results under Parameters & Structures
 # -----------------------------------------------------------
 
 import os
@@ -61,7 +61,6 @@ except Exception as e:
 MODEL_Y1_PATH = "./final_52_y1"
 MODEL_P_PATH = "./final_52_p"
 
-# The first model in each list is used as the best model.
 BEST_Y1_MODEL = "NeuralNetTorch_BAG_L1"
 BEST_P_MODEL = "NeuralNetFastAI_BAG_L1"
 
@@ -108,19 +107,6 @@ st.markdown(
         color: #374151;
     }
 
-    .result-label {
-        font-size: 0.78rem;
-        color: #64748b;
-        margin-bottom: 3px;
-    }
-
-    .result-value {
-        font-size: 1.02rem;
-        font-weight: 650;
-        color: #172554;
-        overflow-wrap: anywhere;
-    }
-
     div[data-testid="stImage"] {
         width: 100% !important;
         display: flex !important;
@@ -154,8 +140,8 @@ st.markdown(
         font-weight: 650;
         border-radius: 8px;
     }
-
-    /* Make columns equal height */
+    
+    /* Ensure columns align nicely */
     .stColumn {
         display: flex;
         flex-direction: column;
@@ -175,7 +161,7 @@ st.markdown(
 st.markdown(
     """
     <div class="main-title">
-        ⚗️ Isothermal VLE Predictor
+        ️ Isothermal VLE Predictor
     </div>
     """,
     unsafe_allow_html=True,
@@ -295,113 +281,119 @@ def build_feature_row(feat_A, feat_B, x_value, temperature, psat1, psat2):
 
 
 # ===========================================================
-# 8. Three-column page layout
-#    Parameters + Results | Molecular structures | P-x-y phase diagram
+# 8. Optimized Layout
+#    Left Area (Params + Structures + Results) | Right Area (Diagram)
 # ===========================================================
-col_parameters, col_structures, col_diagram = st.columns(
-    [1.05, 0.62, 1.75],
-    gap="medium",
-)
 
-with col_parameters:
-    st.markdown(
-        '<div class="section-header">System Parameters</div>',
-        unsafe_allow_html=True,
-    )
+# Main split: Left side (Params/Struct/Results) vs Right side (Diagram)
+# Ratios approx: (1.05 + 0.62) : 1.75  =>  1.67 : 1.75
+col_left_area, col_right_diagram = st.columns([1.67, 1.75], gap="medium")
 
-    smiles_A = st.text_input(
-        "Component A (SMILES):",
-        value="CCCO",
-        key="smiles_A",
-    )
+# --- Left Area Content ---
+with col_left_area:
+    # Sub-split: Parameters vs Structures
+    col_params, col_structures = st.columns([1.05, 0.62], gap="medium")
 
-    smiles_B = st.text_input(
-        "Component B (SMILES):",
-        value="CCC(=O)OC",
-        key="smiles_B",
-    )
-
-    row_xT = st.columns(2, gap="small")
-    with row_xT[0]:
-        x_input = st.number_input(
-            "Liquid mole fraction x₁:",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.5,
-            step=0.01,
-            format="%.4f",
-            key="x_input",
+    with col_params:
+        st.markdown(
+            '<div class="section-header">System Parameters</div>',
+            unsafe_allow_html=True,
         )
 
-    with row_xT[1]:
-        temp_input = st.number_input(
-            "Temperature T (K):",
-            min_value=200.0,
-            max_value=1000.0,
-            value=328.15,
-            step=0.1,
-            format="%.2f",
-            key="temp_input",
+        smiles_A = st.text_input(
+            "Component A (SMILES):",
+            value="CCCO",
+            key="smiles_A",
         )
 
-    row_psat = st.columns(2, gap="small")
-    with row_psat[0]:
-        psat1_input = st.number_input(
-            "P_sat₁ (kPa):",
-            min_value=0.0,
-            value=15.636161,
-            format="%.6f",
-            key="psat1_input",
+        smiles_B = st.text_input(
+            "Component B (SMILES):",
+            value="CCC(=O)OC",
+            key="smiles_B",
         )
 
-    with row_psat[1]:
-        psat2_input = st.number_input(
-            "P_sat₂ (kPa):",
-            min_value=0.0,
-            value=42.169417,
-            format="%.6f",
-            key="psat2_input",
+        row_xT = st.columns(2, gap="small")
+        with row_xT[0]:
+            x_input = st.number_input(
+                "Liquid mole fraction x₁:",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.5,
+                step=0.01,
+                format="%.4f",
+                key="x_input",
+            )
+
+        with row_xT[1]:
+            temp_input = st.number_input(
+                "Temperature T (K):",
+                min_value=200.0,
+                max_value=1000.0,
+                value=328.15,
+                step=0.1,
+                format="%.2f",
+                key="temp_input",
+            )
+
+        row_psat = st.columns(2, gap="small")
+        with row_psat[0]:
+            psat1_input = st.number_input(
+                "P_sat₁ (kPa):",
+                min_value=0.0,
+                value=15.636161,
+                format="%.6f",
+                key="psat1_input",
+            )
+
+        with row_psat[1]:
+            psat2_input = st.number_input(
+                "P_sat₂ (kPa):",
+                min_value=0.0,
+                value=42.169417,
+                format="%.6f",
+                key="psat2_input",
+            )
+
+        submit_button = st.button(
+            "Submit & Predict Both",
+            type="primary",
+            use_container_width=True,
+            key="predict_button",
         )
 
-    submit_button = st.button(
-        "Submit & Predict Both",
-        type="primary",
-        use_container_width=True,
-        key="predict_button",
-    )
+    with col_structures:
+        st.markdown(
+            '<div class="section-header">Molecular Structures (2D)</div>',
+            unsafe_allow_html=True,
+        )
+
+        st.markdown('<div class="mol-title">Component A</div>', unsafe_allow_html=True)
+        png_A = mol_to_png_bytes(smiles_A, size=(190, 115))
+        if png_A:
+            st.image(png_A, use_container_width=True)
+        else:
+            st.caption("Invalid SMILES")
+
+        st.markdown(
+            '<div style="height: 10px;"></div>'
+            '<div class="mol-title">Component B</div>',
+            unsafe_allow_html=True,
+        )
+        png_B = mol_to_png_bytes(smiles_B, size=(190, 115))
+        if png_B:
+            st.image(png_B, use_container_width=True)
+        else:
+            st.caption("Invalid SMILES")
     
-    # Prediction Results section (under parameters)
+    # Prediction Results Container (Under Params and Structures)
     results_container = st.container()
 
-with col_structures:
-    st.markdown(
-        '<div class="section-header">Molecular Structures (2D)</div>',
-        unsafe_allow_html=True,
-    )
+# --- Right Area Content (Diagram) ---
+diagram_slot = col_right_diagram.empty()
 
-    st.markdown('<div class="mol-title">Component A</div>', unsafe_allow_html=True)
-    png_A = mol_to_png_bytes(smiles_A, size=(190, 115))
-    if png_A:
-        st.image(png_A, use_container_width=True)
-    else:
-        st.caption("Invalid SMILES")
-
-    st.markdown(
-        '<div style="height: 10px;"></div>'
-        '<div class="mol-title">Component B</div>',
-        unsafe_allow_html=True,
-    )
-    png_B = mol_to_png_bytes(smiles_B, size=(190, 115))
-    if png_B:
-        st.image(png_B, use_container_width=True)
-    else:
-        st.caption("Invalid SMILES")
-
-# Reserve the right-hand column for the phase diagram.
-diagram_slot = col_diagram.empty()
 
 # ===========================================================
-# 9. Prediction
+# 9. Prediction Logic
 # ===========================================================
 if submit_button:
     st.session_state["has_prediction"] = False
@@ -430,9 +422,7 @@ if submit_button:
             pred_y1 = load_predictor_y1()
             pred_P = load_predictor_p()
 
-            # ------------------------------------------------
-            # Single-composition predictions (best model only)
-            # ------------------------------------------------
+            # Single-composition predictions
             single_row = build_feature_row(
                 feat_A, feat_B, x_input, temp_input,
                 psat1_input, psat2_input
@@ -456,9 +446,7 @@ if submit_button:
             if not np.isfinite(y_single) or not np.isfinite(p_single):
                 raise ValueError("The selected models returned a non-finite prediction.")
 
-            # ------------------------------------------------
-            # Twenty-point P-x-y phase-diagram predictions
-            # ------------------------------------------------
+            # Phase-diagram predictions
             x_grid = np.linspace(0.0, 1.0, 20)
 
             phase_records = [
@@ -501,8 +489,6 @@ if submit_button:
                 "P (kPa)": p_grid,
             })
 
-            # Bubble-point curve: P versus liquid composition x1.
-            # Dew-point curve: P versus vapor composition y1.
             dew_df = phase_df.sort_values("y1 (vapor)").drop_duplicates(
                 subset=["y1 (vapor)"], keep="first"
             )
@@ -587,7 +573,7 @@ if submit_button:
         st.stop()
 
 # ===========================================================
-# 10. Display prediction results in left column (under parameters)
+# 10. Display Results (Under Params & Structures)
 # ===========================================================
 if st.session_state.get("has_prediction", False):
     result = st.session_state["single_result"]
@@ -620,7 +606,7 @@ if st.session_state.get("has_prediction", False):
         )
 
 # ===========================================================
-# 11. Display phase diagram in the right-hand column
+# 11. Display Phase Diagram (Right Side)
 # ===========================================================
 if st.session_state.get("has_prediction", False):
     with diagram_slot.container():
