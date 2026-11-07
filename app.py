@@ -1,6 +1,6 @@
 # -----------------------------------------------------------
 # Isothermal VLE Predictor
-# Three-column layout + single best-model results + P-x-y diagram
+# Optimized layout: Results under Parameters, aligned with Diagram
 # -----------------------------------------------------------
 
 import os
@@ -151,8 +151,14 @@ st.markdown(
         min-height: 2.65rem;
         margin-top: 0.4rem;
         font-size: 0.93rem;
-        font-weight: 600;
+        font-weight: 650;
         border-radius: 8px;
+    }
+
+    /* Make columns equal height */
+    .stColumn {
+        display: flex;
+        flex-direction: column;
     }
 
     @media (max-width: 950px) {
@@ -290,7 +296,7 @@ def build_feature_row(feat_A, feat_B, x_value, temperature, psat1, psat2):
 
 # ===========================================================
 # 8. Three-column page layout
-#    Parameters | Molecular structures | P-x-y phase diagram
+#    Parameters + Results | Molecular structures | P-x-y phase diagram
 # ===========================================================
 col_parameters, col_structures, col_diagram = st.columns(
     [1.05, 0.62, 1.75],
@@ -363,6 +369,9 @@ with col_parameters:
         use_container_width=True,
         key="predict_button",
     )
+    
+    # Prediction Results section (under parameters)
+    results_container = st.container()
 
 with col_structures:
     st.markdown(
@@ -578,7 +587,40 @@ if submit_button:
         st.stop()
 
 # ===========================================================
-# 10. Display phase diagram in the right-hand column
+# 10. Display prediction results in left column (under parameters)
+# ===========================================================
+if st.session_state.get("has_prediction", False):
+    result = st.session_state["single_result"]
+    
+    with results_container:
+        st.markdown(
+            '<div style="height: 15px;"></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="section-header">Prediction Results</div>',
+            unsafe_allow_html=True,
+        )
+
+        result_df = pd.DataFrame([{
+            "y₁ model": BEST_Y1_MODEL,
+            "Predicted y₁": result["y1"],
+            "P model": BEST_P_MODEL,
+            "Predicted P (kPa)": result["P"],
+        }])
+
+        st.dataframe(
+            result_df.style.format({
+                "Predicted y₁": "{:.6f}",
+                "Predicted P (kPa)": "{:.4f}",
+            }),
+            use_container_width=True,
+            hide_index=True,
+            height=85,
+        )
+
+# ===========================================================
+# 11. Display phase diagram in the right-hand column
 # ===========================================================
 if st.session_state.get("has_prediction", False):
     with diagram_slot.container():
@@ -617,31 +659,3 @@ else:
             unsafe_allow_html=True,
         )
         st.info("Enter the system parameters and click Submit to generate the P-x-y diagram.")
-
-# ===========================================================
-# 11. One-row prediction results (no blank rows, no CSV button)
-# ===========================================================
-if st.session_state.get("has_prediction", False):
-    result = st.session_state["single_result"]
-
-    st.markdown(
-        '<div class="section-header">Prediction Results</div>',
-        unsafe_allow_html=True,
-    )
-
-    result_df = pd.DataFrame([{
-        "y₁ model": BEST_Y1_MODEL,
-        "Predicted y₁": result["y1"],
-        "P model": BEST_P_MODEL,
-        "Predicted P (kPa)": result["P"],
-    }])
-
-    st.dataframe(
-        result_df.style.format({
-            "Predicted y₁": "{:.6f}",
-            "Predicted P (kPa)": "{:.4f}",
-        }),
-        use_container_width=True,
-        hide_index=True,
-        height=85,
-    )
