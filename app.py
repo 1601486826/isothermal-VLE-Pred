@@ -793,7 +793,7 @@ if submit_button:
                     ),
                     x=0.5,
                     xanchor="center",
-                    y=0.98,
+                    y=0.88,
                     yanchor="top",
                     font=dict(
                         size=17,
