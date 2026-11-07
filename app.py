@@ -164,11 +164,6 @@ st.markdown(
         flex-direction: column;
     }
 
-    /* Highlight best model row */
-    .best-model-row {
-        background-color: #f0f4ff !important;
-    }
-
     @media (max-width: 950px) {
         .block-container {
             padding-left: 1rem !important;
@@ -649,9 +644,7 @@ if st.session_state.get("has_prediction", False):
 
         result_df = pd.DataFrame(result_data)
 
-        # Calculate table height: header (~40px) + 5 rows (~35px each) + padding
-        table_height = 40 + (len(result_data) * 35) + 20
-
+        # Fixed height for 5 rows: header (~40px) + 5 rows (~30px each) = ~190px
         st.dataframe(
             result_df.style.format({
                 "Predicted y₁": lambda x: f"{x:.6f}" if pd.notna(x) and x != "" else "",
@@ -659,7 +652,7 @@ if st.session_state.get("has_prediction", False):
             }),
             use_container_width=True,
             hide_index=True,
-            height=table_height,
+            height=190,
         )
 
 # ===========================================================
