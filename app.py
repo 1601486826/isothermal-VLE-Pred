@@ -527,6 +527,7 @@ if submit_button:
                 x=phase_df["x1 (liquid)"],
                 y=phase_df["P (kPa)"],
                 mode="lines",
+                name="Bubble-point curve (P-x₁)",
                 line=dict(width=3, shape="spline", smoothing=1.0),
                 hovertemplate="x₁ = %{x:.4f}<br>P = %{y:.4f} kPa<extra></extra>",
             ))
@@ -555,7 +556,7 @@ if submit_button:
                 xaxis=dict(
                     title=dict(
                         text="<b>Mole fraction of component 1 (x₁ or y₁)</b>",
-                        font=dict(size=14, family="Arial, sans-serif"),
+                        font=dict(size=16, family="Arial, sans-serif"),
                         standoff=18,
                     ),
                     range=[0, 1],
@@ -566,7 +567,7 @@ if submit_button:
                 yaxis=dict(
                     title=dict(
                         text="<b>Pressure (kPa)</b>",
-                        font=dict(size=14, family="Arial, sans-serif"),
+                        font=dict(size=16, family="Arial, sans-serif"),
                         standoff=12,
                     ),
                     showgrid=True,
