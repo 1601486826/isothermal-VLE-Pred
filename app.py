@@ -62,28 +62,22 @@ except Exception as e:
 # ===========================================================
 # 4. Model paths
 # ===========================================================
-MODEL_Y1_PATH = "./final_42_y1"
-MODEL_P_PATH = "./final_42_p"
+MODEL_Y1_PATH = "./final_52_y1"
+MODEL_P_PATH = "./final_52_p"
 
 # ===========================================================
 # 5. Model lists: Top 3 models for each target
 # ===========================================================
 Y1_MODELS_FULL = [
-    "NeuralNetTorch_r22_BAG_L1",
-    "NeuralNetTorch_r41_BAG_L1",
-    "NeuralNetTorch_r79_BAG_L1",
-    "NeuralNetTorch_r197_BAG_L1",
     "NeuralNetTorch_BAG_L1",
-    "NeuralNetTorch_r158_BAG_L1",
+    "NeuralNetTorch_BAG_L2",
+    "CatBoost_BAG_L2",
 ]
 
 P_MODELS_FULL = [
-    "XGBoost_r89_BAG_L2",
-    "LightGBM_BAG_L2",
-    "XGBoost_BAG_L2",
+    "NeuralNetFastAI_BAG_L1",
+    "NeuralNetTorch_r79_BAG_L1",
     "LightGBMXT_BAG_L1",
-    "LightGBM_r131_BAG_L2",
-    "LightGBMLarge_BAG_L2",
 ]
 
 Y1_MODELS = Y1_MODELS_FULL[:3]
