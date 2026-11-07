@@ -69,7 +69,7 @@ MODEL_P_PATH = "./final_52_p"
 # 5. Model lists: Top 3 models for each target
 # ===========================================================
 Y1_MODELS_FULL = [
-    "NeuralNetTorch_BAG_L1"，
+    "NeuralNetTorch_BAG_L1",
 ]
 
 P_MODELS_FULL = [
