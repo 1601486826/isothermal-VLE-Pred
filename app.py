@@ -677,7 +677,7 @@ if st.session_state.get("has_prediction", False):
             },
         )
 
-        with st.expander("View the 20 predicted p-x-y data points"):
+        with st.expander("View the 20 predicted *p-x-y* data points"):
             st.dataframe(
                 st.session_state["phase_df"].style.format({
                     "x1 (liquid)": "{:.4f}",
@@ -694,4 +694,4 @@ else:
             '<div class="section-header">Predicted <i>p-x-y</i> Phase Diagram</div>',
             unsafe_allow_html=True,
         )
-        st.info("Enter the system parameters and click Submit to generate the <i>p-x-y</i> diagram.")
+        st.info("Enter the system parameters and click Submit to generate the *p-x-y* diagram.")
