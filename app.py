@@ -1,6 +1,6 @@
 # -----------------------------------------------------------
 # Isothermal VLE Predictor
-# Optimized Layout: Results under Parameters & Structures
+# Multi-model predictions display
 # -----------------------------------------------------------
 
 import os
@@ -56,13 +56,27 @@ except Exception as e:
     AUTOGLUON_ERROR = str(e)
 
 # ===========================================================
-# 4. Model paths and selected best models
+# 4. Model paths and selected models
 # ===========================================================
 MODEL_Y1_PATH = "./final_52_y1"
 MODEL_P_PATH = "./final_52_p"
 
+# Best models (for phase diagram)
 BEST_Y1_MODEL = "NeuralNetTorch_BAG_L1"
 BEST_P_MODEL = "NeuralNetFastAI_BAG_L1"
+
+# Additional models for comparison
+Y1_MODELS = [
+    "NeuralNetTorch_BAG_L1",
+    "NeuralNetTorch_BAG_L2",
+    "CatBoost_BAG_L2"
+]
+
+P_MODELS = [
+    "NeuralNetFastAI_BAG_L1",
+    "NeuralNetTorch_r79_BAG_L1",
+    "LightGBMXT_BAG_L1"
+]
 
 # ===========================================================
 # 5. Page style
@@ -141,7 +155,6 @@ st.markdown(
         border-radius: 8px;
     }
     
-    /* Ensure columns align nicely */
     .stColumn {
         display: flex;
         flex-direction: column;
@@ -161,7 +174,7 @@ st.markdown(
 st.markdown(
     """
     <div class="main-title">
-        ️ Isothermal VLE Predictor
+        ⚗️ Isothermal VLE Predictor
     </div>
     """,
     unsafe_allow_html=True,
@@ -282,16 +295,11 @@ def build_feature_row(feat_A, feat_B, x_value, temperature, psat1, psat2):
 
 # ===========================================================
 # 8. Optimized Layout
-#    Left Area (Params + Structures + Results) | Right Area (Diagram)
 # ===========================================================
 
-# Main split: Left side (Params/Struct/Results) vs Right side (Diagram)
-# Ratios approx: (1.05 + 0.62) : 1.75  =>  1.67 : 1.75
 col_left_area, col_right_diagram = st.columns([1.67, 1.75], gap="medium")
 
-# --- Left Area Content ---
 with col_left_area:
-    # Sub-split: Parameters vs Structures
     col_params, col_structures = st.columns([1.05, 0.62], gap="medium")
 
     with col_params:
@@ -385,10 +393,8 @@ with col_left_area:
         else:
             st.caption("Invalid SMILES")
     
-    # Prediction Results Container (Under Params and Structures)
     results_container = st.container()
 
-# --- Right Area Content (Diagram) ---
 diagram_slot = col_right_diagram.empty()
 
 
@@ -432,21 +438,39 @@ if submit_button:
             y_input = prepare_model_input(pred_y1, single_df)
             p_input = prepare_model_input(pred_P, single_df)
 
-            y_single_raw = float(
-                pred_y1.predict(y_input, model=BEST_Y1_MODEL).iloc[0]
-            )
-            y_single = float(
-                apply_y1_constraints([y_single_raw], [x_input])[0]
-            )
+            # Predict with all y1 models
+            y1_results = {}
+            for model_name in Y1_MODELS:
+                try:
+                    y_pred_raw = float(
+                        pred_y1.predict(y_input, model=model_name).iloc[0]
+                    )
+                    y_pred = float(
+                        apply_y1_constraints([y_pred_raw], [x_input])[0]
+                    )
+                    y1_results[model_name] = y_pred
+                except Exception as e:
+                    st.warning(f"Model {model_name} failed: {str(e)}")
+                    y1_results[model_name] = np.nan
 
-            p_single = float(
-                pred_P.predict(p_input, model=BEST_P_MODEL).iloc[0]
-            )
+            # Predict with all P models
+            p_results = {}
+            for model_name in P_MODELS:
+                try:
+                    p_pred = float(
+                        pred_P.predict(p_input, model=model_name).iloc[0]
+                    )
+                    p_results[model_name] = p_pred
+                except Exception as e:
+                    st.warning(f"Model {model_name} failed: {str(e)}")
+                    p_results[model_name] = np.nan
 
-            if not np.isfinite(y_single) or not np.isfinite(p_single):
-                raise ValueError("The selected models returned a non-finite prediction.")
+            # Check if best models are valid
+            if not np.isfinite(y1_results.get(BEST_Y1_MODEL, np.nan)) or \
+               not np.isfinite(p_results.get(BEST_P_MODEL, np.nan)):
+                raise ValueError("The selected best models returned non-finite predictions.")
 
-            # Phase-diagram predictions
+            # Phase-diagram predictions (using best models only)
             x_grid = np.linspace(0.0, 1.0, 20)
 
             phase_records = [
@@ -560,10 +584,8 @@ if submit_button:
 
             st.session_state["phase_df"] = phase_df
             st.session_state["phase_fig"] = fig
-            st.session_state["single_result"] = {
-                "y1": y_single,
-                "P": p_single,
-            }
+            st.session_state["y1_results"] = y1_results
+            st.session_state["p_results"] = p_results
             st.session_state["has_prediction"] = True
 
     except Exception as e:
@@ -573,10 +595,11 @@ if submit_button:
         st.stop()
 
 # ===========================================================
-# 10. Display Results (Under Params & Structures)
+# 10. Display Results with Multiple Models
 # ===========================================================
 if st.session_state.get("has_prediction", False):
-    result = st.session_state["single_result"]
+    y1_results = st.session_state["y1_results"]
+    p_results = st.session_state["p_results"]
     
     with results_container:
         st.markdown(
@@ -588,21 +611,43 @@ if st.session_state.get("has_prediction", False):
             unsafe_allow_html=True,
         )
 
-        result_df = pd.DataFrame([{
-            "y₁ model": BEST_Y1_MODEL,
-            "Predicted y₁": result["y1"],
-            "P model": BEST_P_MODEL,
-            "Predicted P (kPa)": result["P"],
-        }])
+        # Create result table with all models
+        result_data = []
+        max_models = max(len(Y1_MODELS), len(P_MODELS))
+        
+        for i in range(max_models):
+            row = {}
+            
+            # y1 model
+            if i < len(Y1_MODELS):
+                model_name = Y1_MODELS[i]
+                row["y₁ model"] = model_name
+                row["Predicted y₁"] = y1_results.get(model_name, np.nan)
+            else:
+                row["y₁ model"] = ""
+                row["Predicted y₁"] = ""
+            
+            # P model
+            if i < len(P_MODELS):
+                model_name = P_MODELS[i]
+                row["P model"] = model_name
+                row["Predicted P (kPa)"] = p_results.get(model_name, np.nan)
+            else:
+                row["P model"] = ""
+                row["Predicted P (kPa)"] = ""
+            
+            result_data.append(row)
+
+        result_df = pd.DataFrame(result_data)
 
         st.dataframe(
             result_df.style.format({
-                "Predicted y₁": "{:.6f}",
-                "Predicted P (kPa)": "{:.4f}",
+                "Predicted y₁": lambda x: f"{x:.6f}" if pd.notna(x) and x != "" else "",
+                "Predicted P (kPa)": lambda x: f"{x:.4f}" if pd.notna(x) and x != "" else "",
             }),
             use_container_width=True,
             hide_index=True,
-            height=85,
+            height=145,
         )
 
 # ===========================================================
