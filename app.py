@@ -1,6 +1,6 @@
 # -----------------------------------------------------------
 # Isothermal VLE Predictor
-# Multi-model predictions display
+# Multi-model predictions display (5 models each)
 # -----------------------------------------------------------
 
 import os
@@ -65,12 +65,13 @@ MODEL_P_PATH = "./final_52_p"
 BEST_Y1_MODEL = "NeuralNetTorch_BAG_L1"
 BEST_P_MODEL = "NeuralNetFastAI_BAG_L1"
 
-# Additional models for comparison
+# All models for comparison (5 models each)
 Y1_MODELS = [
     "NeuralNetTorch_BAG_L1",
     "NeuralNetTorch_BAG_L2",
     "CatBoost_BAG_L2",
     "WeightedEnsemble_L3",
+    "LightGBM_BAG_L2"
 ]
 
 P_MODELS = [
@@ -78,6 +79,7 @@ P_MODELS = [
     "NeuralNetTorch_r79_BAG_L1",
     "LightGBMXT_BAG_L1",
     "NeuralNetTorch_BAG_L1",
+    "XGBoost_BAG_L2"
 ]
 
 # ===========================================================
@@ -160,6 +162,11 @@ st.markdown(
     .stColumn {
         display: flex;
         flex-direction: column;
+    }
+
+    /* Highlight best model row */
+    .best-model-row {
+        background-color: #f0f4ff !important;
     }
 
     @media (max-width: 950px) {
@@ -452,7 +459,7 @@ if submit_button:
                     )
                     y1_results[model_name] = y_pred
                 except Exception as e:
-                    st.warning(f"Model {model_name} failed: {str(e)}")
+                    st.warning(f"y₁ Model {model_name} failed: {str(e)}")
                     y1_results[model_name] = np.nan
 
             # Predict with all P models
@@ -464,7 +471,7 @@ if submit_button:
                     )
                     p_results[model_name] = p_pred
                 except Exception as e:
-                    st.warning(f"Model {model_name} failed: {str(e)}")
+                    st.warning(f"P Model {model_name} failed: {str(e)}")
                     p_results[model_name] = np.nan
 
             # Check if best models are valid
@@ -597,7 +604,7 @@ if submit_button:
         st.stop()
 
 # ===========================================================
-# 10. Display Results with Multiple Models
+# 10. Display Results with Multiple Models (5 rows)
 # ===========================================================
 if st.session_state.get("has_prediction", False):
     y1_results = st.session_state["y1_results"]
@@ -613,7 +620,7 @@ if st.session_state.get("has_prediction", False):
             unsafe_allow_html=True,
         )
 
-        # Create result table with all models
+        # Create result table with all 5 models
         result_data = []
         max_models = max(len(Y1_MODELS), len(P_MODELS))
         
@@ -642,6 +649,9 @@ if st.session_state.get("has_prediction", False):
 
         result_df = pd.DataFrame(result_data)
 
+        # Calculate table height: header (~40px) + 5 rows (~35px each) + padding
+        table_height = 40 + (len(result_data) * 35) + 20
+
         st.dataframe(
             result_df.style.format({
                 "Predicted y₁": lambda x: f"{x:.6f}" if pd.notna(x) and x != "" else "",
@@ -649,7 +659,7 @@ if st.session_state.get("has_prediction", False):
             }),
             use_container_width=True,
             hide_index=True,
-            height=145,
+            height=table_height,
         )
 
 # ===========================================================
