@@ -69,15 +69,11 @@ MODEL_P_PATH = "./final_52_p"
 # 5. Model lists: Top 3 models for each target
 # ===========================================================
 Y1_MODELS_FULL = [
-    "NeuralNetTorch_BAG_L1",
-    "NeuralNetTorch_BAG_L2",
-    "CatBoost_BAG_L2",
+    "NeuralNetTorch_BAG_L1"，
 ]
 
 P_MODELS_FULL = [
     "NeuralNetFastAI_BAG_L1",
-    "NeuralNetTorch_r79_BAG_L1",
-    "LightGBMXT_BAG_L1",
 ]
 
 Y1_MODELS = Y1_MODELS_FULL[:3]
@@ -726,7 +722,7 @@ if submit_button:
         # ===================================================
         st.markdown(
             '<div class="section-header">'
-            'Prediction Results (Top 3 Models Each)'
+            'Prediction Results'
             '</div>',
             unsafe_allow_html=True,
         )
