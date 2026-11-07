@@ -811,7 +811,7 @@ if submit_button:
                             "(x₁ or y₁)</b>"
                         ),
                         font=dict(
-                            size=15,
+                            size=18,
                             family="Arial, sans-serif",
                             color="black"
                         ),
@@ -854,7 +854,7 @@ if submit_button:
                     title=dict(
                         text="<b>Pressure (kPa)</b>",
                         font=dict(
-                            size=15,
+                            size=18,
                             family="Arial, sans-serif",
                             color="black"
                         ),
