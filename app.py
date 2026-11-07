@@ -69,13 +69,15 @@ BEST_P_MODEL = "NeuralNetFastAI_BAG_L1"
 Y1_MODELS = [
     "NeuralNetTorch_BAG_L1",
     "NeuralNetTorch_BAG_L2",
-    "CatBoost_BAG_L2"
+    "CatBoost_BAG_L2",
+    "WeightedEnsemble_L3",
 ]
 
 P_MODELS = [
     "NeuralNetFastAI_BAG_L1",
     "NeuralNetTorch_r79_BAG_L1",
-    "LightGBMXT_BAG_L1"
+    "LightGBMXT_BAG_L1",
+    "NeuralNetTorch_BAG_L1",
 ]
 
 # ===========================================================
