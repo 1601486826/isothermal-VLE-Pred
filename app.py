@@ -527,7 +527,6 @@ if submit_button:
                 x=phase_df["x1 (liquid)"],
                 y=phase_df["P (kPa)"],
                 mode="lines",
-                name="Bubble-point curve (P-x₁)",
                 line=dict(width=3, shape="spline", smoothing=1.0),
                 hovertemplate="x₁ = %{x:.4f}<br>P = %{y:.4f} kPa<extra></extra>",
             ))
