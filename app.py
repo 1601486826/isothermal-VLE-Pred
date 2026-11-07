@@ -163,14 +163,6 @@ st.markdown(
         display: flex;
         flex-direction: column;
     }
-    
-    /* Add border to Plotly chart container */
-    div[data-testid="stPlotlyChart"] {
-        border: 2px solid #d1d5db;
-        border-radius: 8px;
-        padding: 8px;
-        background-color: white;
-    }
 
     @media (max-width: 950px) {
         .block-container {
@@ -545,7 +537,7 @@ if submit_button:
                 y=dew_df["P (kPa)"],
                 mode="lines",
                 name="Dew-point curve (P-y₁)",
-                line=dict(width=3, shape="spline", smoothing=1.0),  # Removed dash="dash"
+                line=dict(width=3, dash="dash", shape="spline", smoothing=1.0),
                 hovertemplate="y₁ = %{x:.4f}<br>P = %{y:.4f} kPa<extra></extra>",
             ))
 
@@ -553,7 +545,6 @@ if submit_button:
                 template="plotly_white",
                 height=590,
                 margin=dict(l=65, r=25, t=105, b=75),
-                showlegend=False,  # Hide legend
                 title=dict(
                     text=f"Isothermal <i>p-x-y</i> Diagram at T = {temp_input:.2f} K",
                     x=0.5,
@@ -582,6 +573,15 @@ if submit_button:
                     showgrid=True,
                     zeroline=False,
                     tickfont=dict(size=11),
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="top",
+                    y=1.10,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=10),
+                    itemwidth=150,
                 ),
                 hovermode="closest",
             )
