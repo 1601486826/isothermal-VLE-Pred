@@ -652,7 +652,7 @@ if st.session_state.get("has_prediction", False):
             }),
             use_container_width=True,
             hide_index=True,
-            height=208,
+            height=210,
         )
 
 # ===========================================================
