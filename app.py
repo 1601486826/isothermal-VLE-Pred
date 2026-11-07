@@ -546,7 +546,7 @@ if submit_button:
                 height=590,
                 margin=dict(l=65, r=25, t=105, b=75),
                 title=dict(
-                    text=f"Isothermal P-x-y Diagram at T = {temp_input:.2f} K",
+                    text=f"Isothermal <i>p-x-y</i> Diagram at T = {temp_input:.2f} K",
                     x=0.5,
                     xanchor="center",
                     y=0.98,
@@ -661,7 +661,7 @@ if st.session_state.get("has_prediction", False):
 if st.session_state.get("has_prediction", False):
     with diagram_slot.container():
         st.markdown(
-            '<div class="section-header">Predicted P-x-y Phase Diagram</div>',
+            '<div class="section-header">Predicted <i>p-x-y</i> Phase Diagram</div>',
             unsafe_allow_html=True,
         )
         st.plotly_chart(
@@ -677,7 +677,7 @@ if st.session_state.get("has_prediction", False):
             },
         )
 
-        with st.expander("View the 20 predicted P-x-y data points"):
+        with st.expander("View the 20 predicted <i>p-x-y</i> data points"):
             st.dataframe(
                 st.session_state["phase_df"].style.format({
                     "x1 (liquid)": "{:.4f}",
@@ -691,7 +691,7 @@ if st.session_state.get("has_prediction", False):
 else:
     with diagram_slot.container():
         st.markdown(
-            '<div class="section-header">Predicted P-x-y Phase Diagram</div>',
+            '<div class="section-header">Predicted <i>p-x-y</i> Phase Diagram</div>',
             unsafe_allow_html=True,
         )
-        st.info("Enter the system parameters and click Submit to generate the P-x-y diagram.")
+        st.info("Enter the system parameters and click Submit to generate the <i>p-x-y</i> diagram.")
